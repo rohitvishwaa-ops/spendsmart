@@ -1,32 +1,110 @@
 # 💰 SpendSmart — Personal Finance Dashboard
 
-A full-stack expense tracking web app built with React, Firebase, and Recharts.
-Track daily expenses, visualize spending patterns, and get smart financial insights.
+> A full-stack expense tracking web app built with **React 18**, **Firebase**, and **Recharts**.  
+> Track daily expenses, visualize spending patterns, and get smart financial insights — all for free.
 
 ---
 
-## 🚀 How to Publish (Step by Step)
+## 🛠 Tech Stack
 
-### PART 1 — Firebase Setup (Your Job — 5 mins)
+| Layer | Technology | Version |
+|---|---|---|
+| Frontend | React + Vite | 18.3.1 / 5.4.2 |
+| Auth | Firebase Authentication | 10.12.0 |
+| Database | Cloud Firestore (NoSQL) | 10.12.0 |
+| Charts | Recharts | 2.12.7 |
+| Hosting | Vercel (free) | — |
+| Fonts | DM Sans · Playfair Display · JetBrains Mono | — |
 
-> Firebase is the free backend that stores your data and handles login.
+---
 
-1. **Go to** [console.firebase.google.com](https://console.firebase.google.com)
-2. Click **"Add Project"** → Enter any name (e.g. `spendsmart`) → Continue
-3. Disable Google Analytics (optional) → **Create Project**
+## 📁 Project Structure
 
-#### Enable Authentication
-4. In the left sidebar → **Authentication** → **Get Started**
-5. Under **Sign-in method** tab:
-   - Enable **Email/Password** → Save
-   - Enable **Google** → add your support email → Save
+```
+spendsmart/
+├── public/
+│   └── favicon.svg              # App icon
+├── src/
+│   ├── App.jsx                  # Main app — all components & logic
+│   └── main.jsx                 # React entry point
+├── .env.example                 # Template for environment variables
+├── .env                         # ⚠️ Your secrets — NEVER commit this!
+├── .gitignore                   # Keeps .env out of Git
+├── firestore.rules              # Firestore security rules
+├── index.html                   # HTML entry point with SEO meta tags
+├── package.json                 # Dependencies
+├── vercel.json                  # Vercel deployment config
+└── vite.config.js               # Vite bundler config
+```
 
-#### Enable Firestore Database
-6. In sidebar → **Firestore Database** → **Create Database**
-7. Choose **"Start in production mode"** → Select your region → Done
+---
 
-#### Set Security Rules
-8. In Firestore → **Rules** tab → Replace ALL existing text with:
+## ✅ Features
+
+| Feature | Status |
+|---|---|
+| Add / Edit / Delete expenses | ✅ |
+| Firebase Authentication — Email + Google | ✅ |
+| Firestore real-time sync | ✅ |
+| Dashboard with stat cards | ✅ |
+| Area chart — spending trend | ✅ |
+| Pie chart — category breakdown | ✅ |
+| Bar chart — daily spend | ✅ |
+| Smart financial insights (JS rules) | ✅ |
+| Budget tracker with color alerts | ✅ |
+| Financial health score | ✅ |
+| Filter & sort transactions | ✅ |
+| Demo mode — works without Firebase | ✅ |
+| Vercel deployment ready | ✅ |
+| Secure Firestore rules | ✅ |
+
+---
+
+## 🚀 How to Run Locally
+
+### Prerequisites
+- [Node.js v18+](https://nodejs.org) installed
+- A Firebase project (see Firebase Setup below)
+
+```bash
+# 1. Navigate into the project folder
+cd spendsmart
+
+# 2. Install all dependencies
+npm install
+
+# 3. Create your environment file
+cp .env.example .env
+# Then open .env and fill in your Firebase values (see below)
+
+# 4. Start the dev server
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## 🔥 Firebase Setup
+
+### Step 1 — Create a Project
+1. Go to [console.firebase.google.com](https://console.firebase.google.com)
+2. Click **Add Project** → enter a name → **Create Project**
+
+### Step 2 — Enable Authentication
+1. Sidebar → **Build** → **Authentication** → **Get Started**
+2. Under **Sign-in method**, enable:
+   - ✅ **Email/Password**
+   - ✅ **Google** (add your Gmail as support email)
+
+### Step 3 — Enable Firestore
+1. Sidebar → **Build** → **Firestore Database** → **Create Database**
+2. Choose **Standard edition** → select region `asia-south1` (Mumbai) → **Next**
+3. Choose **Start in production mode** → **Create**
+
+### Step 4 — Set Security Rules
+In Firestore → **Rules** tab, replace everything with:
+
 ```
 rules_version = '2';
 service cloud.firestore {
@@ -40,70 +118,36 @@ service cloud.firestore {
   }
 }
 ```
-9. Click **Publish**
 
-#### Get Your Config Keys
-10. Go to **Project Settings** (gear icon ⚙️ in sidebar) → **General** tab
-11. Scroll down to **"Your apps"** → Click **"Web"** icon (`</>`)
-12. Register app with any nickname → **Register App**
-13. You'll see a config object like:
-```js
-const firebaseConfig = {
-  apiKey: "AIza...",
-  authDomain: "yourapp.firebaseapp.com",
-  projectId: "yourapp",
-  storageBucket: "yourapp.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123:web:abc123"
-};
-```
-14. **Copy these values** — you'll need them next.
+Click **Publish**.
+
+### Step 5 — Get Your Config Keys
+1. Click the **⚙️ gear icon** → **Project Settings** → **General** tab
+2. Scroll to **Your apps** → click the **</>** (Web) icon
+3. Register with any nickname → copy the config object
 
 ---
 
-### PART 2 — Local Setup (Run on Your Computer)
+## 🔑 Environment Variables
 
-> Requires: [Node.js](https://nodejs.org) (v18+) installed
-
-```bash
-# 1. Extract the project zip / open the folder
-cd spendsmart
-
-# 2. Install dependencies
-npm install
-
-# 3. Create your .env file
-cp .env.example .env
-```
-
-Now open `.env` in any text editor (Notepad, VS Code, etc.) and fill in your Firebase values:
+Create a `.env` file in the project root (copy from `.env.example`):
 
 ```env
-VITE_FIREBASE_API_KEY=AIza...
-VITE_FIREBASE_AUTH_DOMAIN=yourapp.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=yourapp
-VITE_FIREBASE_STORAGE_BUCKET=yourapp.appspot.com
+VITE_FIREBASE_API_KEY=AIzaSy...
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project
+VITE_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123:web:abc123
+VITE_FIREBASE_APP_ID=1:123456:web:abc123
 ```
 
-```bash
-# 4. Run the app locally
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173) — the app should load with Firebase live!
+> ⚠️ **Never commit `.env` to GitHub.** It is already listed in `.gitignore`.
 
 ---
 
-### PART 3 — Publish to Vercel (Free Hosting — 3 mins)
+## 🌐 Deploy to Vercel (Free)
 
-> Vercel gives you a free public URL like `spendsmart.vercel.app`
-
-1. **Push your code to GitHub:**
-   - Go to [github.com](https://github.com) → New repository → `spendsmart`
-   - Upload all project files (or use Git commands below)
-
+### Step 1 — Push to GitHub
 ```bash
 git init
 git add .
@@ -113,109 +157,57 @@ git remote add origin https://github.com/YOUR_USERNAME/spendsmart.git
 git push -u origin main
 ```
 
-2. **Deploy on Vercel:**
-   - Go to [vercel.com](https://vercel.com) → Sign up free with GitHub
-   - Click **"Add New Project"** → Import your `spendsmart` repo
-   - Framework: **Vite** (auto-detected)
+### Step 2 — Deploy on Vercel
+1. Go to [vercel.com](https://vercel.com) → sign up free with GitHub
+2. Click **Add New Project** → import your `spendsmart` repo
+3. Framework will be auto-detected as **Vite**
+4. Under **Environment Variables**, add all 6 `VITE_FIREBASE_*` values from your `.env`
+5. Click **Deploy** → wait ~60 seconds → your app is live! 🎉
 
-3. **Add Environment Variables in Vercel:**
-   - In the deploy setup → click **"Environment Variables"**
-   - Add each variable from your `.env` file:
-     - `VITE_FIREBASE_API_KEY` → your value
-     - `VITE_FIREBASE_AUTH_DOMAIN` → your value
-     - `VITE_FIREBASE_PROJECT_ID` → your value
-     - `VITE_FIREBASE_STORAGE_BUCKET` → your value
-     - `VITE_FIREBASE_MESSAGING_SENDER_ID` → your value
-     - `VITE_FIREBASE_APP_ID` → your value
-
-4. Click **"Deploy"** → Wait 60 seconds → **Your app is live!** 🎉
-
----
-
-### PART 4 — Authorize Your Domain in Firebase
-
-After deploying to Vercel, you must whitelist your URL in Firebase:
+### Step 3 — Authorize Your Domain in Firebase
+After deploying, Google Sign-in needs your live URL whitelisted:
 
 1. Firebase Console → **Authentication** → **Settings** tab
-2. Under **"Authorized domains"** → Click **"Add domain"**
-3. Enter your Vercel URL: `spendsmart.vercel.app` (without https://)
-4. Click **Add** — Google Sign-in will now work on your live site
-
----
-
-## 📁 Project Structure
-
-```
-spendsmart/
-├── public/
-│   └── favicon.svg          # App icon
-├── src/
-│   ├── App.jsx              # Main app (all components)
-│   └── main.jsx             # React entry point
-├── .env.example             # Template for environment variables
-├── .env                     # Your secrets (NEVER commit this!)
-├── .gitignore               # Keeps .env out of Git
-├── firestore.rules          # Firestore security rules
-├── index.html               # HTML entry point
-├── package.json             # Dependencies
-├── vercel.json              # Vercel deployment config
-└── vite.config.js           # Vite bundler config
-```
-
----
-
-## ✅ Feature Checklist
-
-| Feature | Status |
-|---|---|
-| Add / Edit / Delete expenses | ✅ |
-| Firebase Authentication (Email + Google) | ✅ |
-| Firestore real-time sync | ✅ |
-| Dashboard with stat cards | ✅ |
-| Area chart — spending trend | ✅ |
-| Pie chart — category breakdown | ✅ |
-| Bar chart — daily spend | ✅ |
-| Smart financial insights | ✅ |
-| Budget tracker with alerts | ✅ |
-| Filter & sort transactions | ✅ |
-| Mobile responsive layout | ✅ |
-| Demo mode (no Firebase needed) | ✅ |
-| Vercel deployment config | ✅ |
-| Secure Firestore rules | ✅ |
+2. Under **Authorized domains** → **Add domain**
+3. Enter your Vercel URL e.g. `spendsmart.vercel.app` (no `https://`)
+4. Click **Add**
 
 ---
 
 ## 🔒 Security Notes
 
-- `.env` is in `.gitignore` — your Firebase keys are never uploaded to GitHub
-- Firestore rules ensure each user can only access their own data
-- Firebase API keys are safe to expose in frontend code — they're restricted by Firestore rules and authorized domains
+- `.env` is in `.gitignore` — Firebase keys are never uploaded to GitHub
+- Firestore rules ensure each user can **only access their own data**
+- Firebase API keys in frontend are safe — they are scoped by Firestore rules + authorized domains
+- No credit card required — Firebase Spark (free) plan is sufficient for personal use
 
 ---
 
-## 🛠 Tech Stack
+## 📦 Available Scripts
 
-| Layer | Technology |
+```bash
+npm run dev        # Start local development server at localhost:5173
+npm run build      # Build optimized production bundle → /dist
+npm run preview    # Preview the production build locally
+npm run lint       # Run ESLint on source files
+```
+
+---
+
+## 🐛 Troubleshooting
+
+| Error | Fix |
 |---|---|
-| Frontend | React 18 + Vite |
-| Auth | Firebase Authentication |
-| Database | Cloud Firestore (NoSQL) |
-| Charts | Recharts |
-| Hosting | Vercel (free) |
-| Fonts | DM Sans + Playfair Display + JetBrains Mono |
+| `npm` is not recognized | Install Node.js from nodejs.org and reopen terminal |
+| PowerShell script disabled | Run: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` |
+| App shows Demo Mode on live site | Add all 6 `VITE_FIREBASE_*` env variables in Vercel dashboard |
+| `auth/unauthorized-domain` | Add your Vercel URL to Firebase → Authentication → Authorized domains |
+| `Firestore permission denied` | Check your Firestore security rules match the ones in `firestore.rules` |
+| `npm install` fails | Run `node --version` — must be v18 or higher |
 
 ---
 
-## 📞 Troubleshooting
+## 📄 License
 
-**"Firebase: Error (auth/unauthorized-domain)"**
-→ You forgot Step 4. Add your Vercel domain to Firebase authorized domains.
-
-**"Missing env variables / Demo mode showing on live site"**
-→ Environment variables weren't added in Vercel. Go to Vercel → Project Settings → Environment Variables.
-
-**"npm install fails"**
-→ Make sure Node.js v18+ is installed: `node --version`
-
-**"Firestore permission denied"**
-→ Check your Firestore security rules match exactly what's in `firestore.rules`.
+This project is for personal and educational use.  
+Built with ❤️ using React, Firebase, and Vite.
