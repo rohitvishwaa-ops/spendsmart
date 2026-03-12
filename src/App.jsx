@@ -1198,20 +1198,20 @@ export default function App() {
               <div style={{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:4}}>Financial Health Score</div>
               <div style={{fontSize:11,color:"var(--text3)",marginBottom:22}}>Based on your spending patterns</div>
               {[
-                {label:"Budget Adherence",   tip:"Staying within your set budget",         score:Math.max(0,100-budgetPct),                         color:budgetColor},
-                {label:"Category Balance",   tip:"Diverse spending across categories",      score:Math.min(100,Object.keys(catTots).length*14),       color:"var(--blue)"},
-                {label:"Tracking Habit",     tip:"Consistency in logging expenses",         score:Math.min(100,expenses.length*8),                    color:"var(--green)"},
-              ].map(({label,tip,score,color})=>(
+                {label:"Budget Adherence",  tip:"Staying within your set budget",     score:Math.max(0,100-budgetPct),                    hex:budgetPct>85?"#F87171":budgetPct>60?"#D4A853":"#34D399"},
+                {label:"Category Balance",  tip:"Diverse spending across categories", score:Math.min(100,Object.keys(catTots).length*14), hex:"#5B8DEF"},
+                {label:"Tracking Habit",    tip:"Consistency in logging expenses",    score:Math.min(100,expenses.length*8),              hex:"#34D399"},
+              ].map(({label,tip,score,hex})=>(
                 <div key={label} style={{marginBottom:20}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:8}}>
                     <div>
                       <div style={{fontSize:13,fontWeight:500,color:"var(--text)"}}>{label}</div>
                       <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>{tip}</div>
                     </div>
-                    <div style={{fontFamily:"var(--font-mono)",fontSize:20,fontWeight:600,color,lineHeight:1}}>{score}<span style={{fontSize:11,color:"var(--text3)",fontWeight:400}}>/100</span></div>
+                    <div style={{fontFamily:"var(--font-mono)",fontSize:20,fontWeight:600,color:hex,lineHeight:1}}>{score}<span style={{fontSize:11,color:"var(--text3)",fontWeight:400}}>/100</span></div>
                   </div>
-                  <div className="progress" style={{height:8}}>
-                    <div className="progress-fill" style={{width:`${score}%`,background:`linear-gradient(90deg,${color}80,${color})`}}/>
+                  <div style={{height:8,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden"}}>
+                    <div style={{width:`${score}%`,height:"100%",borderRadius:4,background:`linear-gradient(90deg,${hex}99,${hex})`,transition:"width 1.2s cubic-bezier(0.4,0,0.2,1)"}}/>
                   </div>
                 </div>
               ))}
