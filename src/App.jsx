@@ -1,33 +1,28 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from "recharts";
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
-import { getFirestore, collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc } from "firebase/firestore";
 
 // ─────────────────────────────────────────────────────────────────
-// FIREBASE — reads from .env file (VITE_ prefix required)
+// 🔥 FIREBASE CONFIG — Replace with YOUR config
 // ─────────────────────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
-  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
-const isConfigured = !!import.meta.env.VITE_FIREBASE_API_KEY;
-
-let firebaseApp, firebaseAuth, firebaseDb;
-if (isConfigured) {
-  firebaseApp  = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
-  firebaseAuth = getAuth(firebaseApp);
-  firebaseDb   = getFirestore(firebaseApp);
+let firebaseApp, firebaseAuth, firebaseDb, authMod, storeMod;
+async function loadFirebase() {
+  if (firebaseApp) return;
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+  authMod  = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+  storeMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  firebaseApp  = initializeApp(FIREBASE_CONFIG);
+  firebaseAuth = authMod.getAuth(firebaseApp);
+  firebaseDb   = storeMod.getFirestore(firebaseApp);
 }
-
-// Aliases for cleaner code
-const auth = firebaseAuth;
-const db   = firebaseDb;
 
 // ─────────────────────────────────────────────────────────────────
 // DESIGN TOKENS + CONSTANTS
@@ -55,7 +50,7 @@ const DEMO = [
 ];
 
 const fmt = n => "₹" + Number(n).toLocaleString("en-IN");
-// isConfigured already declared above
+const isReal = FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY";
 
 // ─────────────────────────────────────────────────────────────────
 // GLOBAL STYLES
@@ -296,6 +291,24 @@ const GLOBAL_CSS = `
   .row:last-child { border-bottom: none; padding-bottom: 0; }
   .row:hover { background: transparent; }
 
+  /* ── Responsive amount + category hide ── */
+  .amount-display { min-width: 80px; text-align: right; font-family: var(--font-mono); font-size: 14px; font-weight: 600; }
+  .cat-badge-hide {}
+  @media(max-width:768px) {
+    .cat-badge-hide { display: none !important; }
+    .amount-display { min-width: 60px !important; font-size: 13px !important; }
+    .row { gap: 8px !important; padding: 10px 0 !important; }
+    .filter-row { flex-wrap: wrap !important; gap: 8px !important; }
+    .filter-row select, .filter-row input { width: 100% !important; min-width: unset !important; }
+    .insight-grid { grid-template-columns: 1fr !important; }
+    .budget-cols  { grid-template-columns: 1fr !important; }
+    .chart-height { height: 200px !important; }
+  }
+
+  /* ── Responsive helpers ── */
+  .desktop-only-btn {}
+  @media(max-width:768px){ .desktop-only-btn { display:none !important; } }
+
   /* ── Section title ── */
   .section-title {
     font-family: var(--font-display);
@@ -318,6 +331,156 @@ const GLOBAL_CSS = `
   .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
   @media(max-width:1100px){ .grid-4{ grid-template-columns:repeat(2,1fr); } }
   @media(max-width:900px){  .grid-2{ grid-template-columns:1fr; } .grid-3{ grid-template-columns:1fr 1fr; } }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE — MOBILE FIRST
+  ══════════════════════════════════════ */
+
+  /* Desktop: show sidebar, hide mobile elements */
+  .sidebar-desktop   { display: flex; }
+  .mobile-topbar     { display: none; }
+  .mobile-bottom-nav { display: none; }
+  .desktop-only-topbar { display: flex; }
+
+  /* ── Mobile breakpoint 768px ── */
+  @media(max-width:768px){
+    /* Layout */
+    .sidebar-desktop      { display: none !important; }
+    .mobile-topbar        { display: flex !important; }
+    .mobile-bottom-nav    { display: flex !important; }
+    .desktop-only-topbar  { display: none !important; }
+    .desktop-only-btn     { display: none !important; }
+    .main-scroll          { padding-bottom: 76px !important; height: calc(100vh - 56px) !important; }
+    .main-content-area    { padding: 16px 14px 0 !important; }
+
+    /* Grids collapse */
+    .grid-4  { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    .grid-2  { grid-template-columns: 1fr !important; gap: 14px !important; }
+    .grid-3  { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+
+    /* Cards */
+    .card        { border-radius: 14px !important; }
+    .stat-card   { padding: 14px 14px 16px !important; border-radius: 14px !important; }
+
+    /* Typography */
+    .section-title { font-size: 19px !important; }
+
+    /* Rows — tighter on mobile */
+    .row { gap: 10px !important; padding: 11px 0 !important; }
+
+    /* Category badge: hide on small screens to give space */
+    .cat-badge-hide { display: none !important; }
+
+    /* Amount column narrower */
+    .amount-display { min-width: 64px !important; font-size: 13px !important; }
+
+    /* Filter row stacks vertically */
+    .filter-row { flex-direction: column !important; gap: 8px !important; }
+    .filter-row select { width: 100% !important; min-width: unset !important; }
+
+    /* Toast moves above bottom nav */
+    .toast { bottom: 76px !important; right: 14px !important; left: 14px !important; max-width: 100% !important; }
+
+    /* Insight cards tighter */
+    .insight-card { padding: 14px 14px !important; gap: 12px !important; }
+
+    /* Quick chips smaller */
+    .quick-chip { font-size: 11px !important; padding: 6px 10px !important; }
+  }
+
+  /* Very small phones */
+  @media(max-width:380px){
+    .grid-4 { grid-template-columns: 1fr 1fr !important; }
+    .stat-card { padding: 12px !important; }
+    .main-content-area { padding: 12px 10px 0 !important; }
+  }
+
+  /* ── Mobile Top Bar ── */
+  .mobile-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 150;
+    background: rgba(8,11,20,0.96);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 0 16px;
+    height: 56px;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  /* ── Mobile Bottom Nav ── */
+  .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    background: rgba(13,17,32,0.98);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 200;
+    padding: 0 6px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ── Mobile Nav Item ── */
+  .mob-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    height: 56px;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: var(--transition);
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mob-nav-item:active { transform: scale(0.92); }
+  @media(max-width:768px){ .mobile-page-heading { display:block !important; } }
+  .mob-nav-item.active { background: rgba(212,168,83,0.1); }
+  .mob-nav-item.active .mob-icon-wrap {
+    background: rgba(212,168,83,0.15);
+    border: 1px solid rgba(212,168,83,0.25);
+  }
+  .mob-icon-wrap {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: var(--transition);
+  }
+  .mob-nav-item .mob-label {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  /* ── Mobile stat card compact ── */
+  .mob-stat-val {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+  .mob-stat-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text3);
+  }
 
   /* ── Toast ── */
   .toast {
@@ -363,6 +526,9 @@ const GLOBAL_CSS = `
 
   /* ── Auth specific ── */
   .auth-tab { flex:1; padding:10px; border:none; border-radius:8px; font-family:var(--font); font-size:14px; font-weight:600; cursor:pointer; transition:var(--transition); }
+  @media(max-width:768px){
+    .auth-tab { font-size:13px; padding:9px; }
+  }
 
   /* ── Floating label hint ── */
   .label {
@@ -399,6 +565,9 @@ const GLOBAL_CSS = `
   }
 
   /* ── Quick add chips ── */
+  @media(max-width:768px){
+    .quick-chip { font-size:11px !important; padding:5px 10px !important; }
+  }
   .quick-chip {
     background: var(--bg3);
     border: 1px solid var(--border);
@@ -480,7 +649,7 @@ function AuthScreen({ onAuth, busy, err }) {
       {/* Grid overlay */}
       <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)", backgroundSize:"60px 60px", pointerEvents:"none" }} />
 
-      <div style={{ width:420, position:"relative", zIndex:1, animation:"fadeUp 0.6s ease forwards" }}>
+      <div style={{ width:"min(420px, 92vw)", position:"relative", zIndex:1, animation:"fadeUp 0.6s ease forwards" }}>
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:44 }}>
           <div style={{ width:56, height:56, background:"linear-gradient(135deg,var(--gold),#B8902E)", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, margin:"0 auto 16px", boxShadow:"0 8px 32px rgba(212,168,83,0.3)" }}>💰</div>
@@ -572,7 +741,7 @@ export default function App() {
   const [user,    setUser]      = useState(null);
   const [authBusy,setAuthBusy]  = useState(false);
   const [authErr, setAuthErr]   = useState("");
-  const [demoMode,setDemoMode]  = useState(!isConfigured);
+  const [demoMode,setDemoMode]  = useState(!isReal);
 
   const [expenses,    setExpenses]    = useState(demoMode ? DEMO : []);
   const [budget,      setBudget]      = useState(25000);
@@ -595,29 +764,23 @@ export default function App() {
   const changeTab = (t) => { setTab(t); setAnimKey(k=>k+1); if(contentRef.current) contentRef.current.scrollTop=0; };
 
   useEffect(() => {
-  if (!isConfigured) {
-    setDemoMode(true);
-    return;
-  }
-
-  setFbReady(true);
-
-  onAuthStateChanged(auth, u => {
-    setUser(u);
-    if (!u) setExpenses([]);
-  });
+    if (!isReal) return;
+    loadFirebase().then(() => {
+      setFbReady(true);
+      authMod.onAuthStateChanged(firebaseAuth, u => { setUser(u); if (!u) setExpenses([]); });
+    }).catch(() => setDemoMode(true));
   }, []);
 
   useEffect(() => {
     if (!user || !firebaseDb || demoMode) return;
     setDbBusy(true);
-    const ref = collection(db,"users",user.uid,"expenses");
-    const q   = query(ref, orderBy("date","desc"));
-    const unsub = onSnapshot(q, snap => {
+    const ref = storeMod.collection(firebaseDb,"users",user.uid,"expenses");
+    const q   = storeMod.query(ref, storeMod.orderBy("date","desc"));
+    const unsub = storeMod.onSnapshot(q, snap => {
       setExpenses(snap.docs.map(d=>({id:d.id,...d.data()})));
       setDbBusy(false);
     }, ()=>setDbBusy(false));
-    getDoc(doc(db,"users",user.uid)).then(d => {
+    storeMod.getDoc(storeMod.doc(firebaseDb,"users",user.uid)).then(d => {
       if (d.exists() && d.data().budget) { const b=d.data().budget; setBudget(b); setBudgetInput(String(b)); }
     });
     return ()=>unsub();
@@ -626,16 +789,17 @@ export default function App() {
   const handleAuth = async ({mode,email,password,name}) => {
     setAuthErr(""); setAuthBusy(true);
     try {
-      if (mode==="google") await signInWithPopup(auth, new GoogleAuthProvider());
-      else if (mode==="signup") { const c=await createUserWithEmailAndPassword(auth,email,password); if(name)await updateProfile(c.user,{displayName:name}); }
-      else await signInWithEmailAndPassword(auth,email,password);
+      await loadFirebase();
+      if (mode==="google") await authMod.signInWithPopup(firebaseAuth, new authMod.GoogleAuthProvider());
+      else if (mode==="signup") { const c=await authMod.createUserWithEmailAndPassword(firebaseAuth,email,password); if(name)await authMod.updateProfile(c.user,{displayName:name}); }
+      else await authMod.signInWithEmailAndPassword(firebaseAuth,email,password);
     } catch(e) {
       const M={"auth/email-already-in-use":"Email already registered.","auth/wrong-password":"Incorrect password.","auth/user-not-found":"No account found.","auth/weak-password":"Password needs 6+ chars.","auth/invalid-email":"Invalid email.","auth/popup-closed-by-user":"Sign-in cancelled."};
       setAuthErr(M[e.code]||e.message);
     } finally { setAuthBusy(false); }
   };
 
-  const handleLogout = async () => { await signOut(auth); setExpenses([]); pop("Signed out successfully","error"); };
+  const handleLogout = async () => { await authMod.signOut(firebaseAuth); setExpenses([]); pop("Signed out successfully","error"); };
 
   const handleSave = async () => {
     if (!form.amount || isNaN(form.amount) || Number(form.amount)<=0) { pop("Please enter a valid amount","error"); return; }
@@ -645,8 +809,8 @@ export default function App() {
       pop(editId?"Expense updated":"Expense added successfully");
     } else {
       try {
-        if (editId) { await updateDoc(doc(db,"users",user.uid,"expenses",editId),entry); pop("Updated & synced to Firebase ☁️"); }
-        else { await addDoc(collection(db,"users",user.uid,"expenses"),entry); pop("Saved to Firebase ☁️"); }
+        if (editId) { await storeMod.updateDoc(storeMod.doc(firebaseDb,"users",user.uid,"expenses",editId),entry); pop("Updated & synced to Firebase ☁️"); }
+        else { await storeMod.addDoc(storeMod.collection(firebaseDb,"users",user.uid,"expenses"),entry); pop("Saved to Firebase ☁️"); }
       } catch(e) { pop("Firebase error: "+e.message,"error"); return; }
     }
     setEditId(null);
@@ -656,7 +820,7 @@ export default function App() {
 
   const handleDelete = async id => {
     if (demoMode) setExpenses(prev=>prev.filter(e=>e.id!==id));
-    else { try { await deleteDoc(doc(db,"users",user.uid,"expenses",id)); } catch(e){ pop("Delete failed","error"); return; } }
+    else { try { await storeMod.deleteDoc(storeMod.doc(firebaseDb,"users",user.uid,"expenses",id)); } catch(e){ pop("Delete failed","error"); return; } }
     pop("Expense removed","error");
   };
 
@@ -665,13 +829,13 @@ export default function App() {
   const handleQuick = async (desc,amount,category) => {
     const entry={amount,category,description:desc,date:new Date().toISOString().split("T")[0],createdAt:new Date().toISOString()};
     if (demoMode) setExpenses(prev=>[{...entry,id:"d"+Date.now()},...prev]);
-    else { try{await addDoc(collection(db,"users",user.uid,"expenses"),entry);}catch(e){pop("Failed","error");return;} }
+    else { try{await storeMod.addDoc(storeMod.collection(firebaseDb,"users",user.uid,"expenses"),entry);}catch(e){pop("Failed","error");return;} }
     pop(`${desc} added`);
   };
 
   const saveBudget = async val => {
     setBudget(val);
-    if (!demoMode&&user) { try{await setDoc(doc(db,"users",user.uid),{budget:val},{merge:true}); pop("Budget saved to Firebase ☁️");}catch(e){pop("Save failed","error");} }
+    if (!demoMode&&user) { try{await storeMod.setDoc(storeMod.doc(firebaseDb,"users",user.uid),{budget:val},{merge:true}); pop("Budget saved to Firebase ☁️");}catch(e){pop("Save failed","error");} }
     else pop("Budget updated");
   };
 
@@ -716,8 +880,8 @@ export default function App() {
     {id:"budget",   label:"Budget"},
   ];
 
-  if (isConfigured && fbReady && !user) return <AuthScreen onAuth={handleAuth} busy={authBusy} err={authErr}/>;
-  if (isConfigured && !fbReady && !demoMode) return (
+  if (isReal && fbReady && !user) return <AuthScreen onAuth={handleAuth} busy={authBusy} err={authErr}/>;
+  if (isReal && !fbReady && !demoMode) return (
     <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
       <style>{GLOBAL_CSS}</style>
       <div style={{width:48,height:48,background:"linear-gradient(135deg,var(--gold),#B8902E)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>💰</div>
@@ -728,13 +892,48 @@ export default function App() {
 
   const userName = user?.displayName?.split(" ")[0] || (demoMode?"Guest":user?.email?.split("@")[0]);
   const now = new Date(); const monthName = now.toLocaleString("default",{month:"long"});
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
+  const chartH = isMobile ? 180 : 220;
 
   return (
-    <div style={{minHeight:"100vh",background:"var(--bg)",color:"var(--text)",fontFamily:"var(--font)",display:"flex",overflow:"hidden",height:"100vh"}}>
+    <div style={{height:"100vh",background:"var(--bg)",color:"var(--text)",fontFamily:"var(--font)",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
       <style>{GLOBAL_CSS}</style>
 
       {/* ═══════════ SIDEBAR ═══════════ */}
-      <aside style={{width:232,background:"var(--bg2)",borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",flexShrink:0,height:"100vh",overflow:"hidden"}}>
+      {/* ═══════════ MOBILE TOP BAR ═══════════ */}
+      {/* ═══════════ MOBILE TOP BAR ═══════════ */}
+      <div className="mobile-topbar">
+        {/* Left: Logo + name */}
+        <div style={{display:"flex",alignItems:"center",gap:9}}>
+          <div style={{width:32,height:32,background:"linear-gradient(135deg,var(--gold),#B8902E)",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0,boxShadow:"0 2px 8px rgba(212,168,83,0.3)"}}>💰</div>
+          <div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:15,fontWeight:700,color:"var(--text)",letterSpacing:"-0.2px",lineHeight:1.1}}>SpendSmart</div>
+            <div style={{fontSize:9,color:"var(--text3)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>{monthName} {now.getFullYear()}</div>
+          </div>
+        </div>
+
+        {/* Right: status + actions */}
+        <div style={{display:"flex",alignItems:"center",gap:7}}>
+          {/* Budget warning pill */}
+          {budgetPct>85 && (
+            <div onClick={()=>changeTab("budget")} style={{display:"flex",alignItems:"center",gap:4,background:"rgba(248,113,113,0.1)",border:"1px solid rgba(248,113,113,0.25)",borderRadius:20,padding:"4px 9px",cursor:"pointer"}}>
+              <span style={{fontSize:11}}>⚠️</span>
+              <span style={{fontSize:10,fontWeight:700,color:"var(--red)"}}>{budgetPct}%</span>
+            </div>
+          )}
+          {/* Live/Demo badge */}
+          <div style={{background:demoMode?"rgba(251,191,36,0.1)":"rgba(52,211,153,0.1)",border:`1px solid ${demoMode?"rgba(251,191,36,0.2)":"rgba(52,211,153,0.2)"}`,borderRadius:20,padding:"4px 9px"}}>
+            <span style={{fontSize:9,fontWeight:700,color:demoMode?"var(--gold)":"var(--green)",textTransform:"uppercase",letterSpacing:"0.5px"}}>{demoMode?"Demo":"● Live"}</span>
+          </div>
+          {/* Add FAB button */}
+          <button onClick={()=>changeTab("add")} style={{width:34,height:34,background:"linear-gradient(135deg,var(--gold),#B8902E)",border:"none",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,boxShadow:"0 2px 8px rgba(212,168,83,0.3)",fontSize:18,fontWeight:700,color:"#0D0A00"}}>+</button>
+        </div>
+      </div>
+
+
+      {/* Inner row: sidebar + main content */}
+      <div style={{display:"flex",flexDirection:"row",flex:1,overflow:"hidden",minHeight:0}}>
+      <aside className="sidebar-desktop" style={{width:232,background:"var(--bg2)",borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",flexShrink:0,height:"100vh",overflow:"hidden"}}>
         {/* Logo */}
         <div style={{padding:"24px 20px 20px"}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:24}}>
@@ -804,10 +1003,11 @@ export default function App() {
         )}
       </aside>
 
+
       {/* ═══════════ MAIN CONTENT ═══════════ */}
-      <main ref={contentRef} style={{flex:1,overflowY:"auto",height:"100vh",background:"var(--bg)"}}>
+      <main ref={contentRef} className="main-scroll" style={{flex:1,overflowY:"auto",height:"100%",background:"var(--bg)",minWidth:0}}>
         {/* Top bar */}
-        <div style={{position:"sticky",top:0,zIndex:100,background:"rgba(8,11,20,0.85)",backdropFilter:"blur(20px)",borderBottom:"1px solid var(--border)",padding:"14px 32px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div className="topbar-inner desktop-only-topbar" style={{position:"sticky",top:0,zIndex:100,background:"rgba(8,11,20,0.85)",backdropFilter:"blur(20px)",borderBottom:"1px solid var(--border)",padding:"14px 32px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
             <h2 style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,color:"var(--text)",letterSpacing:"-0.3px"}}>
               {tab==="dashboard"?"Financial Overview":tab==="add"?editId?"Edit Transaction":"Add Transaction":tab==="expenses"?"Transactions":tab==="charts"?"Analytics":tab==="insights"?"Smart Insights":"Budget Manager"}
@@ -821,14 +1021,24 @@ export default function App() {
             )}
             {demoMode && <div className="badge badge-gold">⚡ Demo Mode</div>}
             {!demoMode && user && <div className="badge badge-green">🔥 Firebase Live</div>}
-            <button className="btn-primary" onClick={()=>changeTab("add")} style={{padding:"8px 16px",fontSize:13}}>
+            <button className="btn-primary desktop-only-btn" onClick={()=>changeTab("add")} style={{padding:"8px 16px",fontSize:13}}>
               <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
               Add Expense
             </button>
           </div>
         </div>
 
-        <div style={{padding:"28px 32px"}} key={animKey} className="animate-fadeup">
+        <div style={{padding:"clamp(14px, 3vw, 28px) clamp(14px, 3vw, 32px)"}} key={animKey} className="animate-fadeup main-content-area" data-tab={tab}>
+
+          {/* ─── Mobile page heading ─── */}
+          <div style={{display:"none"}} className="mobile-page-heading">
+            <div style={{marginBottom:16,paddingBottom:12,borderBottom:"1px solid var(--border)"}}>
+              <h2 style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,color:"var(--text)",letterSpacing:"-0.3px",margin:0}}>
+                {tab==="dashboard"?"Financial Overview":tab==="add"?editId?"Edit Transaction":"Add Expense":tab==="expenses"?"My Transactions":tab==="charts"?"Analytics":tab==="insights"?"Smart Insights":"Budget Manager"}
+              </h2>
+              <p style={{fontSize:11,color:"var(--text3)",marginTop:3}}>{expenses.length} transactions · {fmt(total)} total</p>
+            </div>
+          </div>
 
           {/* ─── Demo banner ─── */}
           {demoMode && tab==="dashboard" && (
@@ -880,14 +1090,16 @@ export default function App() {
                 {label:"Budget Remaining", val:fmt(Math.max(0,budget-total)), icon:"💳", accent:budgetColor, sub:`${100-budgetPct}% left`},
               ].map((s,i)=>(
                 <div key={i} className="stat-card" style={{animationDelay:`${i*80}ms`}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-                    <span style={{fontSize:10,fontWeight:600,color:"var(--text3)",textTransform:"uppercase",letterSpacing:"0.7px"}}>{s.label}</span>
-                    <span style={{fontSize:20,lineHeight:1}}>{s.icon}</span>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                    <span style={{fontSize:9,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:"0.6px",lineHeight:1.3}}>{s.label}</span>
+                    <div style={{width:30,height:30,background:`${s.accent}15`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>
+                      {s.icon}
+                    </div>
                   </div>
-                  <div style={{fontFamily:"var(--font-mono)",fontSize:23,fontWeight:600,color:s.accent,letterSpacing:"-0.5px",marginBottom:4}}>{s.val}</div>
-                  <div style={{fontSize:11,color:"var(--text3)"}}>{s.sub}</div>
-                  {/* Accent line */}
-                  <div style={{position:"absolute",bottom:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${s.accent}40,transparent)`,borderRadius:"0 0 16px 16px"}}/>
+                  <div style={{fontFamily:"var(--font-mono)",fontSize:"clamp(16px,4vw,23px)",fontWeight:700,color:s.accent,letterSpacing:"-0.5px",marginBottom:4,lineHeight:1}}>{s.val}</div>
+                  <div style={{fontSize:10,color:"var(--text3)",marginTop:2}}>{s.sub}</div>
+                  {/* Accent bar */}
+                  <div style={{position:"absolute",bottom:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${s.accent}50,transparent)`,borderRadius:"0 0 14px 14px"}}/>
                 </div>
               ))}
             </div>
@@ -895,7 +1107,7 @@ export default function App() {
             {/* Charts row */}
             <div className="grid-2" style={{marginBottom:24}}>
               {/* Area chart */}
-              <div className="card" style={{padding:"22px 20px"}}>
+              <div className="card" style={{padding:"clamp(14px,3vw,22px) clamp(14px,3vw,20px)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:2}}>Spending Trend</div>
@@ -905,7 +1117,7 @@ export default function App() {
                 </div>
                 {barData.length===0
                   ? <div className="empty-state"><div className="empty-icon">📈</div><p>Add expenses to see trends</p></div>
-                  : <ResponsiveContainer width="100%" height={180}>
+                  : <ResponsiveContainer width="100%" height={chartH}>
                       <AreaChart data={barData}>
                         <defs>
                           <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
@@ -924,7 +1136,7 @@ export default function App() {
               </div>
 
               {/* Pie chart */}
-              <div className="card" style={{padding:"22px 20px"}}>
+              <div className="card" style={{padding:"clamp(14px,3vw,22px) clamp(14px,3vw,20px)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:2}}>By Category</div>
@@ -974,7 +1186,7 @@ export default function App() {
                         <div style={{fontSize:13.5,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.description||e.category}</div>
                         <div style={{fontSize:11,color:"var(--text3)",marginTop:1}}>{e.date}</div>
                       </div>
-                      <div style={{background:`${COLORS[e.category]}15`,color:COLORS[e.category],padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:500,flexShrink:0}}>{e.category}</div>
+                      <div className="cat-badge-hide" style={{background:`${COLORS[e.category]}15`,color:COLORS[e.category],padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:500,flexShrink:0}}>{e.category}</div>
                       <div className="amount-display" style={{color:"var(--text)",minWidth:80,textAlign:"right"}}>{fmt(e.amount)}</div>
                     </div>
                   ))
@@ -986,7 +1198,7 @@ export default function App() {
               ADD EXPENSE
           ══════════════════════════════════════════════ */}
           {tab==="add" && (
-            <div style={{maxWidth:520}}>
+            <div style={{maxWidth:520,width:"100%"}}>
               <div style={{marginBottom:24}}>
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
                   <span className="badge badge-green">Level 1</span>
@@ -1006,7 +1218,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid-2" style={{gap:14}}>
+                <div className="grid-2" style={{gap:14,gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))"}}>
                   <div>
                     <label className="label">Category</label>
                     <select className="input" value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))}>
@@ -1067,7 +1279,7 @@ export default function App() {
                 </div>
                 <p style={{fontSize:12,color:"var(--text3)"}}>{filtered.length} records · {fmt(filtered.reduce((s,e)=>s+Number(e.amount),0))} total</p>
               </div>
-              <div style={{display:"flex",gap:10}}>
+              <div className="filter-row" style={{display:"flex",gap:10}}>
                 <select className="input" style={{width:160,fontSize:13}} value={filterCat} onChange={e=>setFilterCat(e.target.value)}>
                   <option value="All">All categories</option>
                   {CATS.map(c=><option key={c} value={c}>{ICONS[c]} {c}</option>)}
@@ -1079,7 +1291,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="card" style={{padding:"4px 24px 8px"}}>
+            <div className="card" style={{padding:"4px clamp(14px,3vw,24px) 8px"}}>
               {filtered.length===0
                 ? <div className="empty-state"><div className="empty-icon">{expenses.length===0?"💳":"🔍"}</div><p>{expenses.length===0?"No transactions yet. Add your first expense.":"No transactions in this category."}</p></div>
                 : filtered.map((e,i)=>(
@@ -1089,7 +1301,7 @@ export default function App() {
                         <div style={{fontSize:13.5,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.description||e.category}</div>
                         <div style={{fontSize:11,color:"var(--text3)",marginTop:1,fontFamily:"var(--font-mono)"}}>{e.date}</div>
                       </div>
-                      <div style={{background:`${COLORS[e.category]}12`,color:COLORS[e.category],padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:500,flexShrink:0}}>{e.category}</div>
+                      <div className="cat-badge-hide" style={{background:`${COLORS[e.category]}12`,color:COLORS[e.category],padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:500,flexShrink:0}}>{e.category}</div>
                       <div className="amount-display" style={{color:"var(--text)",minWidth:88,textAlign:"right",fontSize:14}}>{fmt(e.amount)}</div>
                       <div style={{display:"flex",gap:6}}>
                         <button className="btn-icon" onClick={()=>handleEdit(e)} title="Edit">✎</button>
@@ -1111,11 +1323,11 @@ export default function App() {
             </div>
 
             <div className="grid-2" style={{marginBottom:24}}>
-              <div className="card" style={{padding:"22px 20px"}}>
+              <div className="card" style={{padding:"clamp(14px,3vw,22px) clamp(14px,3vw,20px)"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:4}}>Category Distribution</div>
                 <div style={{fontSize:11,color:"var(--text3)",marginBottom:20}}>Where your money goes</div>
                 {pieData.length===0?<div className="empty-state"><div className="empty-icon">🥧</div><p>No data</p></div>:(
-                  <ResponsiveContainer width="100%" height={220}>
+                  <ResponsiveContainer width="100%" height={chartH}>
                     <PieChart>
                       <Pie data={pieData} cx="50%" cy="50%" outerRadius={88} dataKey="value" paddingAngle={2} strokeWidth={0}>
                         {pieData.map((e,i)=><Cell key={i} fill={COLORS[e.name]||"#888"}/>)}
@@ -1126,11 +1338,11 @@ export default function App() {
                 )}
               </div>
 
-              <div className="card" style={{padding:"22px 20px"}}>
+              <div className="card" style={{padding:"clamp(14px,3vw,22px) clamp(14px,3vw,20px)"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:4}}>Daily Spend</div>
                 <div style={{fontSize:11,color:"var(--text3)",marginBottom:20}}>Last 14 days pattern</div>
                 {barData.length===0?<div className="empty-state"><div className="empty-icon">📊</div><p>No data</p></div>:(
-                  <ResponsiveContainer width="100%" height={220}>
+                  <ResponsiveContainer width="100%" height={chartH}>
                     <BarChart data={barData} barSize={14}>
                       <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.04)" vertical={false}/>
                       <XAxis dataKey="date" tick={{fill:"#475569",fontSize:9}} axisLine={false} tickLine={false}/>
@@ -1194,13 +1406,13 @@ export default function App() {
             </div>
 
             {/* Health scores */}
-            <div className="card" style={{padding:"22px 24px",marginBottom:20}}>
+            <div className="card" style={{padding:"clamp(16px,3vw,22px) clamp(16px,3vw,24px)",marginBottom:20}}>
               <div style={{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:4}}>Financial Health Score</div>
               <div style={{fontSize:11,color:"var(--text3)",marginBottom:22}}>Based on your spending patterns</div>
               {[
-                {label:"Budget Adherence",  tip:"Staying within your set budget",     score:Math.max(0,100-budgetPct),                    hex:budgetPct>85?"#F87171":budgetPct>60?"#D4A853":"#34D399"},
-                {label:"Category Balance",  tip:"Diverse spending across categories", score:Math.min(100,Object.keys(catTots).length*14), hex:"#5B8DEF"},
-                {label:"Tracking Habit",    tip:"Consistency in logging expenses",    score:Math.min(100,expenses.length*8),              hex:"#34D399"},
+                {label:"Budget Adherence",  tip:"Staying within your set budget",     score:Math.max(0,100-budgetPct),                       hex:budgetPct>85?"#F87171":budgetPct>60?"#D4A853":"#34D399"},
+                {label:"Category Balance",  tip:"Diverse spending across categories", score:Math.min(100,Object.keys(catTots).length*14),     hex:"#5B8DEF"},
+                {label:"Tracking Habit",    tip:"Consistency in logging expenses",    score:Math.min(100,expenses.length*8),                  hex:"#34D399"},
               ].map(({label,tip,score,hex})=>(
                 <div key={label} style={{marginBottom:20}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:8}}>
@@ -1230,7 +1442,7 @@ export default function App() {
               BUDGET
           ══════════════════════════════════════════════ */}
           {tab==="budget" && (
-            <div style={{maxWidth:540}}>
+            <div style={{maxWidth:540,width:"100%"}}>
               <div style={{marginBottom:24,display:"flex",gap:8,alignItems:"center"}}>
                 <span className="badge badge-level">Level 3</span>
                 <span style={{fontSize:12,color:"var(--text3)"}}>Smart budget alerts & category tracking</span>
@@ -1331,6 +1543,45 @@ export default function App() {
 
         </div>
       </main>
+      </div>{/* end inner row */}
+      {/* ═══════════ MOBILE BOTTOM NAV ═══════════ */}
+      <div className="mobile-bottom-nav">
+        {[
+          {id:"dashboard", icon:"🏠", label:"Home"},
+          {id:"expenses",  icon:"💸", label:"Expenses"},
+          {id:"add",       icon:"➕", label:"Add",    special:true},
+          {id:"charts",    icon:"📊", label:"Charts"},
+          {id:"insights",  icon:"💡", label:"Insights"},
+        ].map(n => (
+          <div key={n.id}
+            className={`mob-nav-item${tab===n.id?" active":""}`}
+            onClick={()=>changeTab(n.id)}
+          >
+            {n.special ? (
+              /* Centre FAB-style Add button */
+              <div style={{
+                width:46,height:46,
+                background:"linear-gradient(135deg,var(--gold),#B8902E)",
+                borderRadius:14,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:22,fontWeight:700,color:"#0D0A00",
+                boxShadow:"0 4px 16px rgba(212,168,83,0.45)",
+                marginTop:-14,
+                border:"3px solid var(--bg2)",
+              }}>+</div>
+            ) : (
+              <div className="mob-icon-wrap">
+                <span style={{fontSize:17}}>{n.icon}</span>
+              </div>
+            )}
+            <span className="mob-label" style={{
+              color: tab===n.id ? "var(--gold)" : "var(--text3)",
+              marginTop: n.special ? 2 : 0,
+            }}>{n.label}</span>
+          </div>
+        ))}
+      </div>
+
 
       {/* ═══════════ TOAST ═══════════ */}
       {toast && (
